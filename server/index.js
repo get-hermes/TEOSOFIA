@@ -124,6 +124,21 @@ app.get('/api/stats', async (req, res) => {
   res.json({ assinantes: await subscribers.count(), push_ready: push.isPushReady() });
 });
 
+// ── Export de assinantes (para backup) — protegido por ADMIN_TOKEN ──
+// Retorna a base completa de assinantes em JSON. Uso: GET /api/export?token=<ADMIN_TOKEN>
+app.get('/api/export', async (req, res) => {
+  const token = req.headers['x-admin-token'] || req.query.token;
+  if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+    return res.status(401).json({ error: 'Não autorizado.' });
+  }
+  try {
+    const all = await subscribers.listAll();
+    res.json({ exported_at: new Date().toISOString(), count: all.length, subscribers: all });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Health check ──────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
