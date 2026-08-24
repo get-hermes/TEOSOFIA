@@ -15,13 +15,22 @@
 
   // ── Cookie persistente de assinatura ───────────────────────────
   const SUB_COOKIE = 'teosofia_subscribed';
-  function setSubscribedCookie() {
+  function setSubscribedCookie(contact) {
     const d = new Date();
     d.setTime(d.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 ano
-    document.cookie = `${SUB_COOKIE}=1; expires=${d.toUTCString()}; path=/; SameSite=Lax`;
+    const val = contact ? encodeURIComponent(contact) : '1';
+    document.cookie = `${SUB_COOKIE}=${val}; expires=${d.toUTCString()}; path=/; SameSite=Lax`;
   }
   function hasSubscribedCookie() {
     return document.cookie.split(';').some((c) => c.trim().startsWith(SUB_COOKIE + '='));
+  }
+  // Contato salvo no cookie (para pré-preencher a edição de dados).
+  function getSubscribedContact() {
+    const c = document.cookie.split(';').map((s) => s.trim()).find((s) => s.startsWith(SUB_COOKIE + '='));
+    if (!c) return null;
+    const val = c.slice(SUB_COOKIE.length + 1);
+    if (!val || val === '1') return null;
+    try { return decodeURIComponent(val); } catch { return null; }
   }
 
   // ── Service worker + push ──────────────────────────────────────
@@ -247,9 +256,9 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro');
-      setSubscribedCookie();
-      $('#subscribeSection').classList.add('hidden');
-      showStatus('Cadastro realizado! Você está na nossa base de assinantes. 🎉', 'ok');
+      setSubscribedCookie(contact);
+      renderSubscribed();
+      showStatus('Inscrição realizada! Você está inscrito. 🎉', 'ok');
       $('#contact').value = '';
       $('#name').value = '';
     } catch (err) {
@@ -268,6 +277,61 @@
     showStatus._t = setTimeout(() => el.classList.remove('show'), 6000);
   }
 
+  // Confirmação persistente de que a pessoa já está inscrita (com ticker de check).
+  function renderSubscribed() {
+    const sec = $('#subscribeSection');
+    if (!sec) return;
+    sec.classList.remove('hidden');
+    sec.innerHTML = `
+      <div class="subscribed">
+        <div class="ticker" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div>
+          <h2>Você já está inscrito</h2>
+          <p class="meta">Você receberá o conteúdo do dia. Obrigado! 🎉</p>
+        </div>
+      </div>
+      <button id="editDataBtn" class="btn-ghost edit-data" type="button">Alterar dados cadastrados</button>`;
+    const btn = $('#editDataBtn');
+    if (btn) btn.addEventListener('click', onEditData);
+  }
+
+  // Re-renderiza o formulário de assinatura (pré-preenchido quando há dados).
+  function renderSubscribeForm(prefill) {
+    const sec = $('#subscribeSection');
+    if (!sec) return;
+    sec.classList.remove('hidden');
+    const name = (prefill && prefill.name) ? esc(prefill.name) : '';
+    const contact = (prefill && prefill.contact) ? esc(prefill.contact) : '';
+    sec.innerHTML = `
+      <span class="tag">Assinatura grátis</span>
+      <h2>Receba conteúdo do dia</h2>
+      <p class="hint">Cadastre-se gratuitamente para receber conteúdo diário e ficar por dentro das novidades. Sem spam.</p>
+      <form id="subscribeForm" class="subscribe-form">
+        <input id="name" type="text" placeholder="Seu nome (opcional)" autocomplete="name" value="${name}">
+        <input id="contact" type="text" placeholder="Email ou telefone" autocomplete="email" required value="${contact}">
+        <button id="subscribeBtn" type="submit" class="btn-primary btn-block">Salvar alterações</button>
+      </form>
+      <div id="status" class="status" role="status" aria-live="polite"></div>`;
+    const form = $('#subscribeForm');
+    if (form) form.addEventListener('submit', handleSubscribe);
+  }
+
+  // Abre a edição dos dados cadastrados, pré-preenchendo com o que está salvo no servidor.
+  async function onEditData() {
+    const contact = getSubscribedContact();
+    let prefill = null;
+    if (contact) {
+      try {
+        const res = await fetch('/api/subscriber?contact=' + encodeURIComponent(contact));
+        if (res.ok) prefill = await res.json();
+      } catch (e) { /* segue com o formulário vazio */ }
+    }
+    renderSubscribeForm(prefill);
+    $('#subscribeSection').scrollIntoView({ behavior: 'smooth' });
+  }
+
   // ── Navegação por abas ─────────────────────────────────────────
   function setupTabs() {
     $$('nav.bottom button').forEach((btn) => {
@@ -280,9 +344,8 @@
         else if (state.tab === 'assinar') {
           $('#content').innerHTML = '';
           if (hasSubscribedCookie()) {
-            $('#subscribeSection').classList.add('hidden');
-            $('#content').innerHTML = '<div class="card"><p class="meta">Você já está assinante. Obrigado! 🎉</p></div>';
-            $('#content').scrollIntoView({ behavior: 'smooth' });
+            renderSubscribed();
+            $('#subscribeSection').scrollIntoView({ behavior: 'smooth' });
           } else {
             $('#subscribeSection').classList.remove('hidden');
             $('#subscribeSection').scrollIntoView({ behavior: 'smooth' });
@@ -297,10 +360,11 @@
 
   // ── Init ───────────────────────────────────────────────────────
   async function init() {
-    if (hasSubscribedCookie()) $('#subscribeSection').classList.add('hidden');
-    $('#subscribeForm').addEventListener('submit', handleSubscribe);
+    const form = $('#subscribeForm');
+    if (form) form.addEventListener('submit', handleSubscribe);
     $('#pushBtn').addEventListener('click', togglePush);
     setupTabs();
+    if (hasSubscribedCookie()) renderSubscribed();
     await registerSW();
     await loadPushConfig();
     loadContent();

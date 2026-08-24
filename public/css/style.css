@@ -224,12 +224,12 @@ main {
 
 .card .quote {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
-  font-style: italic;
+  font-size: 1.45rem;
+  font-style: normal;
   font-weight: 500;
   color: var(--text);
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.6;
   letter-spacing: 0.1px;
   max-width: 60ch;
   position: relative;
@@ -445,6 +445,51 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   background: rgba(26, 26, 46, 0.85);
 }
 
+/* ── Confirmação de inscrição (ticker de check) ─ */
+.subscribed {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.subscribed .ticker {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--bg);
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  box-shadow: 0 6px 18px var(--accent-glow);
+  animation: ticker-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.subscribed h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.subscribed .meta { margin: 0; }
+/* Botão para alterar os dados cadastrados (abaixo do cartão de confirmação). */
+.edit-data {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 15px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-soft);
+  background: rgba(35, 35, 66, 0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.edit-data:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+@keyframes ticker-pop {
+  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
 /* ── Foco de teclado (acessibilidade) ───────── */
 :focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -591,7 +636,7 @@ nav.bottom .ico svg { display: block; }
   }
   main { padding-top: 26px; }
   .card { padding: 26px 24px; }
-  .card .quote { font-size: 1.5rem; }
+  .card .quote { font-size: 1.55rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

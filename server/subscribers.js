@@ -99,6 +99,16 @@ export async function listAll() {
   return s.subscribers;
 }
 
+// Busca um assinante pelo contato (para pré-preencher a edição de dados).
+export async function findSubscriber(contact) {
+  const s = await load();
+  const key = normalizeContact(contact);
+  if (!key) return null;
+  const sub = s.subscribers.find((x) => x.key === key);
+  if (!sub) return null;
+  return { id: sub.id, contact: sub.contact, name: sub.name || '' };
+}
+
 export async function count() {
   const s = await load();
   return s.subscribers.length;

@@ -88,6 +88,19 @@ app.post('/api/unsubscribe', async (req, res) => {
   }
 });
 
+// Busca um assinante pelo contato (para pré-preencher a edição de dados).
+app.get('/api/subscriber', async (req, res) => {
+  try {
+    const { contact } = req.query || {};
+    if (!contact) return res.status(400).json({ error: 'Contato é obrigatório.' });
+    const sub = await subscribers.findSubscriber(contact);
+    if (!sub) return res.status(404).json({ error: 'Assinante não encontrado.' });
+    res.json(sub);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // ── Push ─────────────────────────────────────────────────────────
 app.get('/api/push/public-key', (req, res) => {
   res.json({ publicKey: push.getPublicKey(), ready: push.isPushReady() });
