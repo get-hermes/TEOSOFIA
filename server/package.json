@@ -1,0 +1,20 @@
+{
+  "name": "teosofia-app-server",
+  "version": "1.0.0",
+  "description": "Backend do app Teosofia: agrega conteúdo do site teosofia.org, gerencia assinantes e envia push notifications diárias.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "keys": "node scripts/generate-vapid.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "web-push": "^3.6.7"
+  }
+}

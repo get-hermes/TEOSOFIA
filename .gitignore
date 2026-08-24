@@ -1,0 +1,16 @@
+# Dependências
+node_modules/
+.npm-cache/
+
+# Configuração local (contém chaves VAPID e token admin)
+server/.env
+
+# Dados de assinantes (gerados em runtime)
+server/data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema
+.DS_Store
